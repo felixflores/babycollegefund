@@ -1,8 +1,11 @@
 // public/college-fund-calc.js
 
 const CollegeFundCalc = {
-  calculateFutureValue: function (principal, years, rate) {
-    return principal * Math.pow(1 + rate, years);
+  calculateFutureValue: function (principal, years, rate, compoundingFrequency = 12) {
+    // Convert rate to decimal
+    const r = rate / 100;
+    // A = P(1 + r/n)^(nt)
+    return principal * Math.pow(1 + r / compoundingFrequency, compoundingFrequency * years);
   },
 
   formatCurrency: function (amount) {

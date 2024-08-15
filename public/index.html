@@ -5,120 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Donate to Baby's College Fund</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="college-fund-calc.js"></script>
+    <script src="/college-fund-calc.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Paytone+One&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      .handwriting-font {
+        font-family: "Caveat", cursive;
+        font-size: 2rem;
+        font-style: normal;
+      }
+    </style>
   </head>
-  <body class="bg-gray-100 flex justify-center items-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-md w-96">
-      <h1 class="text-4xl font-bold mb-6">Donate to Baby's College Fund</h1>
+  <body class="bg-gray-100 p-8">
+    <div class="max-w-2xl mx-auto space-y-6">
+      <!-- First Section: Donation Amount and Future Value -->
+      <div class="bg-white p-8 rounded-lg shadow-md">
+        <h1 class="text-4xl font-bold mb-6">Donate to Baby's College Fund</h1>
 
-      <div class="flex items-center space-x-2 bg-gray-100 p-2 rounded mb-4">
-        <span class="text-2xl font-bold">$</span>
-        <input
-          type="number"
-          id="amount"
-          class="w-full bg-transparent text-2xl font-bold focus:outline-none"
-          value="532"
-        />
+        <div class="mb-4">
+          <div class="flex items-center space-x-2 bg-gray-100 p-2 rounded">
+            <span class="text-2xl font-bold">$</span>
+            <input
+              type="number"
+              id="amountInput"
+              value="532"
+              class="text-2xl font-bold bg-transparent w-full"
+            />
+          </div>
+        </div>
+
+        <div
+          id="futureValue"
+          class="p-3 bg-blue-100 rounded text-blue-800 font-semibold text-center"
+        ></div>
       </div>
 
-      <div
-        id="futureValue"
-        class="p-3 bg-blue-100 rounded text-blue-800 font-semibold text-center mb-4"
-      >
-        In 18 years this will be $2,125.88
-      </div>
+      <!-- Second Section: Message and Donation Button -->
+      <div class="bg-white p-8 rounded-lg shadow-md">
+        <h2 class="text-xl font-semibold mb-2">
+          Leave a message for her in the future...
+        </h2>
 
-      <div id="purposeOptions" class="grid grid-cols-2 gap-2 mb-4">
-        <!-- Purpose options will be dynamically inserted here -->
-      </div>
+        <div id="messageSuggestions" class="grid grid-cols-3 gap-2 mb-4"></div>
 
-      <button
-        id="donateButton"
-        class="w-full bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-600 transition duration-300"
-      >
-        Donate via Venmo
-      </button>
+        <textarea
+          id="messageInput"
+          rows="2"
+          class="w-full p-2 border rounded mb-4 handwriting-font"
+          placeholder="Your message here..."
+        ></textarea>
+
+        <button
+          id="donateButton"
+          class="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600"
+        >
+          Donate via Venmo
+        </button>
+      </div>
     </div>
 
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        const purposeOptionsContainer =
-          document.getElementById("purposeOptions");
-        const amountInput = document.getElementById("amount");
-        const futureValueDiv = document.getElementById("futureValue");
-        const donateButton = document.getElementById("donateButton");
-        let selectedPurpose = "";
-
-        // Fetch purposes from the server
-        fetch("/purposes")
-          .then((response) => response.json())
-          .then((data) => {
-            data.purposes.forEach((purpose) => {
-              const button = document.createElement("button");
-              button.textContent = purpose;
-              button.className =
-                "p-2 bg-gray-200 rounded text-sm hover:bg-blue-500 hover:text-white transition duration-300";
-              button.onclick = () => selectPurpose(purpose, button);
-              purposeOptionsContainer.appendChild(button);
-            });
-          });
-
-        function selectPurpose(purpose, button) {
-          selectedPurpose = purpose;
-          document.querySelectorAll("#purposeOptions button").forEach((btn) => {
-            btn.classList.remove("bg-blue-500", "text-white");
-            btn.classList.add("bg-gray-200");
-          });
-          button.classList.remove("bg-gray-200");
-          button.classList.add("bg-blue-500", "text-white");
-        }
-
-        amountInput.addEventListener("input", updateFutureValue);
-
-        function updateFutureValue() {
-          const principal = parseFloat(amountInput.value) || 0;
-          const years = 18;
-          const rate = 0.08; // 8% annual return
-          const futureValue = CollegeFundCalc.calculateFutureValue(
-            principal,
-            years,
-            rate
-          );
-          futureValueDiv.textContent = `In ${years} years this will be ${CollegeFundCalc.formatCurrency(
-            futureValue
-          )}`;
-        }
-
-        donateButton.addEventListener("click", function () {
-          const amount = amountInput.value;
-          if (!amount || !selectedPurpose) {
-            alert("Please enter an amount and select a purpose.");
-            return;
-          }
-
-          fetch("/submit", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ amount, purpose: selectedPurpose }),
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              if (data.paymentLink) {
-                window.location.href = data.paymentLink;
-              } else {
-                alert("Error generating payment link. Please try again.");
-              }
-            })
-            .catch((error) => {
-              console.error("Error:", error);
-              alert("An error occurred. Please try again.");
-            });
-        });
-
-        updateFutureValue();
-      });
-    </script>
+    <script src="/app.js"></script>
   </body>
 </html>
