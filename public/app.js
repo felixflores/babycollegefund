@@ -1,16 +1,20 @@
 // app.js
 
 document.addEventListener('DOMContentLoaded', function () {
+  const form = document.getElementById('donationForm');
   const amountInput = document.getElementById('amountInput');
   const futureValueDiv = document.getElementById('futureValue');
   const messageInput = document.getElementById('messageInput');
   const messageSuggestionsDiv = document.getElementById('messageSuggestions');
-  const donateButton = document.getElementById('donateButton');
 
   function updateFutureValue() {
     const amount = parseFloat(amountInput.value);
-    const futureValue = CollegeFundCalc.calculateFutureValue(amount, 18, 6.5);
-    futureValueDiv.textContent = `In 18 years this will be ${CollegeFundCalc.formatCurrency(futureValue)}`;
+    if (!isNaN(amount) && amount > 0) {
+      const futureValue = CollegeFundCalc.calculateFutureValue(amount, 18, 6.5);
+      futureValueDiv.textContent = `In 18 years this will be ${CollegeFundCalc.formatCurrency(futureValue)}`;
+    } else {
+      futureValueDiv.textContent = 'Enter an amount to see its future value';
+    }
   }
 
   function fetchMessageSuggestions() {
@@ -20,7 +24,8 @@ document.addEventListener('DOMContentLoaded', function () {
         data.purposes.forEach(purpose => {
           const button = document.createElement('button');
           button.textContent = purpose;
-          button.className = 'p-2 bg-gray-200 rounded text-sm hover:bg-gray-300';
+          button.className = 'p-2 bg-gray-200 rounded text-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500';
+          button.type = 'button'; // Prevent form submission
           button.onclick = () => selectMessageSuggestion(purpose);
           messageSuggestionsDiv.appendChild(button);
         });
@@ -35,36 +40,51 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     event.target.classList.remove('bg-gray-200');
     event.target.classList.add('bg-blue-500', 'text-white');
+    messageInput.focus();
   }
 
-  function handleDonate() {
-    const amount = amountInput.value;
-    const message = messageInput.value;
+  function handleSubmit(event) {
+    event.preventDefault();
 
-    fetch('/submit', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ amount, purpose: message }),
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.paymentLink) {
-          window.location.href = data.paymentLink;
-        } else {
-          console.error('Error:', data.error);
-          alert('There was an error processing your donation. Please try again.');
-        }
+    if (form.checkValidity()) {
+      const amount = amountInput.value;
+      const message = messageInput.value;
+
+      fetch('/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ amount, purpose: message }),
       })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('There was an error processing your donation. Please try again.');
-      });
+        .then(response => response.json())
+        .then(data => {
+          if (data.paymentLink) {
+            window.location.href = data.paymentLink;
+          } else {
+            console.error('Error:', data.error);
+            showError('There was an error processing your donation. Please try again.');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showError('There was an error processing your donation. Please try again.');
+        });
+    } else {
+      form.reportValidity();
+    }
+  }
+
+  function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.textContent = message;
+    errorDiv.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4';
+    form.appendChild(errorDiv);
+    setTimeout(() => errorDiv.remove(), 5000);
   }
 
   amountInput.addEventListener('input', updateFutureValue);
-  donateButton.addEventListener('click', handleDonate);
+  form.addEventListener('submit', handleSubmit);
 
   updateFutureValue();
   fetchMessageSuggestions();
